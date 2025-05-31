@@ -154,3 +154,8 @@ const init = function () {
   console.log("Initial bookmarks loaded:", state.bookmarks);
 };
 init();
+
+const clearBookmarks = function () {
+  localStorage.clear('bookmarks');
+};
+// clearBookmarks(); // Uncomment to clear bookmarks for testing
