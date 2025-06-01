@@ -26,16 +26,20 @@ A sleek, responsive recipe search and management app built using modern JavaScri
 
 📦 How to Run Locally
 Clone the repository
+
 git clone https://github.com/tanvi20206/Forkify---A-Recipe-FindingWebsite.git
+
 cd Forkify---A-Recipe-FindingWebsite
+
 Install dependencies
+
 npm install
+
 Run development server
+
 npm start
+
 Build for production
 
-bash
-Copy
-Edit
 npm run build
 
