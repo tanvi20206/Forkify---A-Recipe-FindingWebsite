@@ -1,6 +1,7 @@
 import { async } from "regenerator-runtime";
-import { API_URL, RES_PER_PAGE } from "./config.js";
-import { getJSON } from "./helpers.js";
+import { API_URL, RES_PER_PAGE, KEY } from "./config.js";
+//import { getJSON, sendJSON } from "./helpers.js";
+import { AJAX } from "./helpers.js";
 export const state = {
   recipe: {},
   search: {
@@ -11,10 +12,24 @@ export const state = {
   },
   bookmarks: [],
 };
-
+const createRecipeObject = function (data) {
+  const { recipe } = data.data;
+  return {
+    id: recipe.id,
+    title: recipe.title,
+    publisher: recipe.publisher,
+    sourceUrl: recipe.source_url,
+    image: recipe.image_url,
+    servings: recipe.servings || 1,
+    cookingTime: recipe.cooking_time,
+    ingredients: recipe.ingredients,
+    ...(recipe.key && { key: recipe.key }), // Optional chaining for key
+    // bookmarked: state.bookmarks.some((b) => b.id === recipe.id),
+  };
+};
 export const loadRecipe = async function (id) {
   try {
-    const data = await getJSON(`${API_URL}${id}`);
+    const data = await AJAX(`${API_URL}${id}?key=${KEY}`);
     //  const res = await fetch(`${API_URL}/${id}`);
     //         // // "https://forkify-api.jonas.io/api/v2/recipes/5ed6604591c37cdc054bc886"
     //         // `https://forkify-api.jonas.io/api/v2/recipes/${id}`
@@ -24,18 +39,7 @@ export const loadRecipe = async function (id) {
 
     //     if(!res.ok) throw new Error(`${data.message} (${res.status})`);
     // console.log(res,data);
-    const { recipe } = data.data;
-    state.recipe = {
-      id: recipe.id,
-      title: recipe.title,
-      publisher: recipe.publisher,
-      sourceUrl: recipe.source_url,
-      image: recipe.image_url,
-      servings: recipe.servings || 1,
-      cookingTime: recipe.cooking_time,
-      ingredients: recipe.ingredients,
-      // bookmarked: state.bookmarks.some((b) => b.id === recipe.id),
-    };
+    state.recipe = createRecipeObject(data);
     if (state.bookmarks.some((b) => b.id === id)) {
       state.recipe.bookmarked = true;
     } else {
@@ -52,7 +56,7 @@ export const loadRecipe = async function (id) {
 export const loadSearchResults = async function (query) {
   try {
     state.search.query = query;
-    const data = await getJSON(`${API_URL}?search=${query}`);
+    const data = await AJAX(`${API_URL}?search=${query}&key=${KEY}`);
     console.log(data);
 
     state.search.results = data.data.recipes.map((rec) => {
@@ -61,6 +65,7 @@ export const loadSearchResults = async function (query) {
         title: rec.title,
         publisher: rec.publisher,
         image: rec.image_url,
+        ...(rec.key && { key: rec.key }), // Optional chaining for key
       };
     });
     state.search.page = 1; // Reset page to 1
@@ -156,6 +161,45 @@ const init = function () {
 init();
 
 const clearBookmarks = function () {
-  localStorage.clear('bookmarks');
+  localStorage.clear("bookmarks");
 };
 // clearBookmarks(); // Uncomment to clear bookmarks for testing
+export const uploadRecipe = async function (newRecipe) {
+  // console.log(Object.entries(newRecipe));
+  try {
+    const ingredients = Object.entries(newRecipe)
+      .filter((entry) => entry[0].startsWith("ingredient") && entry[1] !== "")
+      .map((ing) => {
+        const ingArr = ing[1].split(",").map((el) => el.trim());
+
+        // const ingArr = ing[1].replaceAll(" ", "").split(",");
+        if (ingArr.length !== 3)
+          throw new Error(
+            "Wrong ingredient format! Please use the correct format."
+          );
+        const [quantity, unit, description] = ingArr;
+        return {
+          quantity: quantity ? +quantity : null,
+          unit,
+          description,
+        };
+      });
+
+    const recipe = {
+      title: newRecipe.title,
+      publisher: newRecipe.publisher,
+      source_url: newRecipe.sourceUrl,
+      image_url: newRecipe.image,
+      servings: +newRecipe.servings,
+      cooking_time: +newRecipe.cookingTime,
+      ingredients: ingredients,
+    };
+    console.log(recipe);
+    const data = await AJAX(`${API_URL}?key=${KEY}`, recipe);
+    state.recipe = createRecipeObject(data);
+    addBookmark(state.recipe);
+  } catch (err) {
+    // console.error("Error in uploadRecipe:", err);
+    throw err;
+  }
+};

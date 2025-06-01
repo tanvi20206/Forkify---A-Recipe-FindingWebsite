@@ -1,10 +1,10 @@
 {
   "name": "forkify",
   "version": "1.0.0",
-  "main": "index.js",
+  "default": "index.js",
   "scripts": {
     "start": "parcel index.html",
-    "build": "parcel build index.html"
+    "build": "parcel build index.html  --dist-dir ./dist"
   },
   "author": "tanvi gupta",
   "license": "ISC",
@@ -93,7 +93,8 @@
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.13.3",
-    "parcel": "^2.13.3"
+    "parcel": "^2.13.3",
+    "svgo": "^3.3.2"
   },
   "description": "https://forkify-api.jonas.io/",
   "keywords": []
